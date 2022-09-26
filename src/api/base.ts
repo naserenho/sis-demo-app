@@ -1,45 +1,23 @@
 import axios, { AxiosError } from "axios";
+import {
+  FamilyMemberBasic,
+  FamilyMembers,
+  FullStudentProfile,
+  Nationality,
+  NationalityDetails,
+  Person,
+  StudentNationality,
+  StudentResponse,
+} from "./types";
 
-export const invoiceBackendAPI = axios.create({
+export const sisBackendAPI = axios.create({
   baseURL: `${process.env.REACT_APP_SIS_BACKEND}`,
 });
-
-interface Person {
-  firstName: string;
-  lastName: string;
-  dateOfBirth: string;
-}
-
-interface StudentResponse extends Person {
-  ID: number;
-}
-
-type NationalityDetails = {
-  ID: number;
-  Title: string;
-};
-
-interface Nationality {
-  nationality?: NationalityDetails;
-}
-
-type FamilyMemberBasic = {
-  relationship: string;
-} & StudentResponse;
-
-type FamilyMembers = FamilyMemberBasic & Nationality;
-
-type FullStudentProfile = {
-  familyMembers: FamilyMembers[];
-} & StudentResponse &
-  Nationality;
-
-type StudentNationality = StudentResponse & Nationality;
 
 // Get All Students
 export const getAllStudents = async () => {
   try {
-    const result = await invoiceBackendAPI.get<StudentResponse[]>("Students");
+    const result = await sisBackendAPI.get<StudentResponse[]>("Students");
     return result.data;
   } catch (error) {
     if (error instanceof AxiosError) {
@@ -56,7 +34,7 @@ export const createStudent = async ({
   lastName,
 }: Person) => {
   try {
-    const result = await invoiceBackendAPI.post<StudentResponse>("Students", {
+    const result = await sisBackendAPI.post<StudentResponse>("Students", {
       dateOfBirth,
       firstName,
       lastName,
@@ -78,7 +56,7 @@ export const updateStudent = async ({
   lastName,
 }: StudentResponse) => {
   try {
-    return await invoiceBackendAPI.put<FullStudentProfile>(`Students/${ID}`, {
+    return await sisBackendAPI.put<FullStudentProfile>(`Students/${ID}`, {
       dateOfBirth,
       firstName,
       lastName,
@@ -94,7 +72,7 @@ export const updateStudent = async ({
 // Get the nationality of a student
 export const getStudentNationality = async (id: string) => {
   try {
-    const result = await invoiceBackendAPI.get<Nationality>(
+    const result = await sisBackendAPI.get<Nationality>(
       `Students/${id}/Nationality`
     );
     if (!result) {
@@ -115,7 +93,7 @@ export const updateStudentNationality = async (
   nationalityId: string
 ) => {
   try {
-    const result = await invoiceBackendAPI.put<StudentNationality>(
+    const result = await sisBackendAPI.put<StudentNationality>(
       `Students/${id}/Nationality/${nationalityId}`
     );
     if (!result) {
@@ -133,7 +111,7 @@ export const updateStudentNationality = async (
 // Gets all family members of a student
 export const getStudentFamilyMembers = async (id: string) => {
   try {
-    const result = await invoiceBackendAPI.get<FamilyMembers[]>(
+    const result = await sisBackendAPI.get<FamilyMembers[]>(
       `Students/${id}/FamilyMembers`
     );
     if (!result) {
@@ -157,7 +135,7 @@ export const createFamilyMember = async ({
   relationship,
 }: FamilyMemberBasic) => {
   try {
-    return await invoiceBackendAPI.post<FamilyMemberBasic>(
+    return await sisBackendAPI.post<FamilyMemberBasic>(
       `Students/${ID}/FamilyMembers`,
       {
         dateOfBirth,
@@ -183,15 +161,12 @@ export const updateFamilyMember = async ({
   relationship,
 }: FamilyMemberBasic) => {
   try {
-    return await invoiceBackendAPI.put<FamilyMemberBasic>(
-      `FamilyMembers/${ID}`,
-      {
-        dateOfBirth,
-        firstName,
-        lastName,
-        relationship,
-      }
-    );
+    return await sisBackendAPI.put<FamilyMemberBasic>(`FamilyMembers/${ID}`, {
+      dateOfBirth,
+      firstName,
+      lastName,
+      relationship,
+    });
   } catch (error) {
     if (error instanceof AxiosError) {
       return Promise.reject(error.response?.data);
@@ -203,7 +178,7 @@ export const updateFamilyMember = async ({
 // Delete a family member for a student
 export const deleteFamilyMember = async (id: string) => {
   try {
-    const result = await invoiceBackendAPI.delete(`FamilyMembers/${id}`);
+    const result = await sisBackendAPI.delete(`FamilyMembers/${id}`);
     if (!result) {
       return Promise.reject("Cannot connect to the server");
     }
@@ -219,7 +194,7 @@ export const deleteFamilyMember = async (id: string) => {
 // Gets nationality of a family member of a student
 export const getFamilyMemberNationality = async (id: string) => {
   try {
-    const result = await invoiceBackendAPI.get<NationalityDetails>(
+    const result = await sisBackendAPI.get<NationalityDetails>(
       `FamilyMembers/${id}/Nationality`
     );
     if (!result) {
@@ -240,7 +215,7 @@ export const updateFamilyMemberNationality = async (
   nationalityId: string
 ) => {
   try {
-    return await invoiceBackendAPI.put<FamilyMembers[]>(
+    return await sisBackendAPI.put<FamilyMembers[]>(
       `FamilyMembers/${id}/Nationality/${nationalityId}`
     );
   } catch (error) {
@@ -254,7 +229,7 @@ export const updateFamilyMemberNationality = async (
 // Get all nationalities in the system
 export const getNationalities = async () => {
   try {
-    const result = await invoiceBackendAPI.get<NationalityDetails[]>(
+    const result = await sisBackendAPI.get<NationalityDetails[]>(
       `Nationalities`
     );
     if (!result) {
@@ -265,6 +240,54 @@ export const getNationalities = async () => {
     if (error instanceof AxiosError) {
       return Promise.reject(error.response?.data);
     }
+    return Promise.reject("Unknown Error");
+  }
+};
+
+export const getStudentDetails = async (student: StudentResponse) => {
+  try {
+    let studentDetails: FullStudentProfile = {
+      ...student,
+      familyMembers: [],
+    };
+    const nationality = await getStudentNationality(`${student.ID}`);
+    studentDetails.nationality = nationality;
+    const res = await getStudentFamilyMembers(`${student.ID}`);
+    studentDetails.familyMembers = res;
+    return studentDetails;
+  } catch (error) {
+    return Promise.reject("Unknown Error");
+  }
+};
+
+export const postStudentDetails = async (student: FullStudentProfile) => {
+  try {
+    let crntId: number = 0;
+    if (student.ID) {
+      crntId = student.ID;
+      const updateBasicDetails = await updateStudent(student);
+    } else {
+      const newStudent = await createStudent({ ...student });
+      if (newStudent.ID) {
+        crntId = newStudent.ID;
+      }
+    }
+    const updateNationality = await updateStudentNationality(
+      crntId.toString(),
+      student.nationality?.ID.toString() ?? ""
+    );
+    return student;
+  } catch (error) {
+    return Promise.reject("Unknown Error");
+  }
+};
+
+export const createStudentDetails = async (student: Person) => {
+  try {
+    const newStudent = await createStudent(student);
+
+    return newStudent;
+  } catch (error) {
     return Promise.reject("Unknown Error");
   }
 };

@@ -1,0 +1,15 @@
+.main {
+  min-height: 75vh;
+  padding: 4rem 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@media print {
+  .header,
+  .footer {
+    visibility: hidden;
+  }
+}
