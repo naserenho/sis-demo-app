@@ -1,45 +1,56 @@
 import {
-  Backdrop,
+  Avatar,
   Box,
   Button,
-  CircularProgress,
-  FormControl,
+  Card,
+  CardHeader,
+  Divider,
   FormLabel,
   Grid,
-  InputLabel,
-  MenuItem,
-  Select,
   TextField,
+  Typography,
 } from "@mui/material";
 import { closeModal, refresh } from "../features/students/student-slice";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { postStudentDetails } from "../api/base";
 import { useAsync } from "../hooks/use-async";
-import SingleInputForm from "./SingleInputForm";
+import TextInputForm from "./TextInputForm";
+import SelectInputForm from "./SelectInputForm";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import DeleteIcon from "@mui/icons-material/Delete";
+import Collapse from "@mui/material/Collapse";
+import CardContent from "@mui/material/CardContent";
+import FormActions from "./FormActions";
+import ExpandAction from "./ExpandAction";
+import NationalityInputForm from "./NationalityInputForm";
+import { FamilyMembers } from "../api/types";
 
 const schema = yup.object({
   firstName: yup.string().required().min(3),
   lastName: yup.string().required(),
   dateOfBirth: yup.string().required(),
   nationality: yup.string().required(),
-  // familyMembers: yup.array(
-  //   yup.object({
-  //     relationship: yup.string().required(),
-  //     firstName: yup.string().required().min(3),
-  //     lastName: yup.string().required(),
-  //     dateOfBirth: yup.date().required(),
-  //     nationality: yup.string().required(),
-  //   })
-  // ),
+  family: yup.array(
+    yup.object({
+      ID: yup.number().notRequired(),
+      relationship: yup.string().required(),
+      firstName: yup.string().required().min(3),
+      lastName: yup.string().required(),
+      dateOfBirth: yup.string().required(),
+      nationality: yup.string().required(),
+    })
+  ),
 });
 
 export type StudentFormValue = yup.InferType<typeof schema>;
 
-export default function ModalForm() {
+export default function StudentForm() {
+  const [expanded, setExpanded] = useState<number | null>(null);
+
   const dispatch = useAppDispatch();
   const { status: postStatus, execute: postForm } =
     useAsync(postStudentDetails);
@@ -47,8 +58,11 @@ export default function ModalForm() {
   const isNew = useAppSelector((state) => state.student.isNew);
   const selectedRole = useAppSelector((state) => state.student.selectedRole);
   const student = useAppSelector((state) => state.student.viewedStudent);
-  const nationalities = useAppSelector((state) => state.student.nationalities);
+  const relationships = useAppSelector((state) => state.student.relationships);
+  const ViewMode = selectedRole === "Admin" && !isNew;
+
   const {
+    control,
     register,
     handleSubmit,
     formState: { errors },
@@ -61,8 +75,29 @@ export default function ModalForm() {
         ? new Date(student.dateOfBirth).toISOString().split(".")[0]
         : undefined,
       nationality: student?.nationality?.ID.toString(),
+      family: student?.familyMembers.map((item) => {
+        return {
+          ID: item.ID,
+          nationality: item.nationality?.ID.toString(),
+          relationship: item.relationship,
+          firstName: item.firstName,
+          lastName: item.lastName,
+          dateOfBirth: item.dateOfBirth
+            ? new Date(item.dateOfBirth).toISOString().split(".")[0]
+            : undefined,
+        };
+      }),
     },
     resolver: yupResolver(schema),
+  });
+
+  const {
+    fields: family,
+    insert,
+    remove,
+  } = useFieldArray({
+    control,
+    name: "family",
   });
 
   useEffect(() => {
@@ -72,6 +107,7 @@ export default function ModalForm() {
         lastName: "",
         dateOfBirth: "",
         nationality: "",
+        family: [],
       });
     }
   }, [student, reset]);
@@ -83,14 +119,12 @@ export default function ModalForm() {
     }
   }, [dispatch, postStatus]);
 
-  const ViewMode = selectedRole === "Admin" && !isNew;
-
-  const handleClose = () => dispatch(closeModal());
   const submitChanges = ({
     firstName,
     lastName,
     dateOfBirth,
     nationality,
+    family,
   }: StudentFormValue) => {
     if (ViewMode) return;
     postForm({
@@ -101,8 +135,34 @@ export default function ModalForm() {
       nationality: {
         ID: parseInt(nationality),
       },
-      familyMembers: [],
+      familyMembers: family
+        ? (family.map((item) => ({
+            ID: item.ID,
+            relationship: item.relationship,
+            firstName: item.firstName,
+            lastName: item.lastName,
+            dateOfBirth: item.dateOfBirth,
+            nationality: { ID: parseInt(item.nationality) },
+          })) as FamilyMembers[])
+        : [],
     });
+  };
+  const handleExpandClick = (index: number) => {
+    if (expanded !== index) setExpanded(index);
+    else setExpanded(null);
+  };
+
+  const handleAddFamily = () => {
+    const newInd = family.length;
+    insert(newInd, {
+      ID: undefined,
+      relationship: "",
+      firstName: "",
+      lastName: "",
+      dateOfBirth: "",
+      nationality: "",
+    });
+    setExpanded(newInd);
   };
 
   return (
@@ -113,15 +173,8 @@ export default function ModalForm() {
       onSubmit={handleSubmit(submitChanges)}
     >
       <Grid container spacing={2}>
-        {/* {status === "error" && (
-                <Grid item xs>
-                  <Alert severity="error" data-test="form-error">
-                    {error}
-                  </Alert>
-                </Grid>
-              )} */}
-        <Grid item xs={6}>
-          <SingleInputForm
+        <Grid item md={6} xs={12}>
+          <TextInputForm
             register={register}
             disabled={ViewMode}
             error={!!errors.firstName}
@@ -130,50 +183,25 @@ export default function ModalForm() {
             test="first-name"
             errMessage="First name is required"
           />
-          {/* <TextField
-            autoComplete="first-name"
-            required
-            fullWidth
-            id="firstName"
-            label="First Name"
-            autoFocus
-            disabled={ViewMode}
-            error={!!errors.firstName}
-            inputProps={{ "data-test": "first-name" }}
-            {...register("firstName")}
-          />
-          {!!errors.firstName && (
-            <FormLabel error data-test="first-name-error">
-              First name is required
-            </FormLabel>
-          )} */}
         </Grid>
-        <Grid item xs={6}>
-          <TextField
-            required
-            fullWidth
-            id="lastName"
-            label="Last Name"
-            autoComplete="lastName"
+        <Grid item md={6} xs={12}>
+          <TextInputForm
+            register={register}
             disabled={ViewMode}
             error={!!errors.lastName}
-            inputProps={{ "data-test": "last-name" }}
-            {...register("lastName")}
+            label="Last Name"
+            id="lastName"
+            test="last-name"
+            errMessage="Last name is required"
           />
-          {!!errors.lastName && (
-            <FormLabel error data-test="last-name-error">
-              Last name is required
-            </FormLabel>
-          )}
         </Grid>
-        <Grid item xs={12}>
+        <Grid item md={6} xs={12}>
           <TextField
             fullWidth
             required
             id="date-of-birth"
             label="Date of birth"
             type="datetime-local"
-            sx={{ mt: 2 }}
             disabled={ViewMode}
             InputLabelProps={{
               shrink: true,
@@ -188,47 +216,179 @@ export default function ModalForm() {
             </FormLabel>
           )}
         </Grid>
-        <Grid item xs={12}>
-          <FormControl fullWidth disabled={ViewMode}>
-            <InputLabel>Nationality</InputLabel>
-            <Select
-              label="Nationality"
-              id="nationality"
-              {...register("nationality")}
-              defaultValue={student?.nationality?.ID.toString() ?? ""}
-            >
-              {nationalities.map((item) => (
-                <MenuItem key={item.ID} value={item.ID}>
-                  {item.Title}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12} sx={{ textAlign: "end" }}>
-          <Button
-            sx={{ mr: 2 }}
+        <Grid item md={6} xs={12}>
+          <NationalityInputForm
+            register={register}
             disabled={ViewMode}
-            type="submit"
-            variant="contained"
-            data-test="submit-student-details"
-          >
-            Submit
-            <Backdrop
-              sx={{
-                color: "#fff",
-                zIndex: (theme) => theme.zIndex.drawer + 1,
-                position: "absolute",
-              }}
-              open={postStatus === "pending"}
-            >
-              <CircularProgress color="inherit" size={20} />
-            </Backdrop>
-          </Button>
-          <Button variant="outlined" onClick={handleClose}>
-            Cancel
-          </Button>
+            error={!!errors.nationality}
+            id="nationality"
+            defaultVal={student?.nationality?.ID.toString() ?? ""}
+          />
         </Grid>
+        <Divider />
+        <Grid item md={12} xs={12}>
+          <Box
+            rowGap="0.5rem"
+            flexDirection="column"
+            sx={{
+              padding: 2,
+              border: "1px solid #aaa",
+              mt: 2,
+              display: "flex",
+            }}
+          >
+            <Typography variant="h6">Family Members</Typography>
+            <Divider sx={{ mt: 1 }} />
+            {family.map((item, ind) => (
+              <Card
+                data-test={`family-member-${ind + 1}`}
+                key={item.id}
+                data-identifier={item.ID}
+              >
+                <CardHeader
+                  onClick={() => handleExpandClick(ind)}
+                  sx={{
+                    cursor: "pointer",
+                    "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.04)" },
+                  }}
+                  avatar={
+                    <Avatar sx={{ bgcolor: "lightgrey" }} aria-label="recipe">
+                      {`${
+                        item.firstName && item.lastName
+                          ? item.firstName[0] + item.lastName[0]
+                          : ind + 1
+                      }`}
+                    </Avatar>
+                  }
+                  action={<ExpandAction expand={expanded === ind} />}
+                  title={`${
+                    item.firstName
+                      ? item.firstName + (" " + item.lastName ?? "")
+                      : "Family Member # " + (ind + 1)
+                  }`}
+                  subheader={item.relationship}
+                />
+                <Collapse in={expanded === ind} timeout="auto" unmountOnExit>
+                  <CardContent>
+                    <Grid container spacing={2}>
+                      <Grid item md={6} xs={12}>
+                        <TextInputForm
+                          register={register}
+                          disabled={ViewMode}
+                          error={!!errors.family?.[ind]?.firstName}
+                          label="First Name"
+                          id={`family.${ind}.firstName`}
+                          test="first-name"
+                          errMessage="First name is required"
+                        />
+                      </Grid>
+                      <Grid item md={6} xs={12}>
+                        <TextInputForm
+                          register={register}
+                          disabled={ViewMode}
+                          error={!!errors.family?.[ind]?.lastName}
+                          label="Last Name"
+                          id={`family.${ind}.lastName`}
+                          test="last-name"
+                          errMessage="Last name is required"
+                        />
+                      </Grid>
+                      <Grid item md={6} xs={12}>
+                        <TextField
+                          fullWidth
+                          required
+                          id="date-of-birth"
+                          label="Date of birth"
+                          type="datetime-local"
+                          disabled={ViewMode}
+                          InputLabelProps={{
+                            shrink: true,
+                          }}
+                          error={!!errors.family?.[ind]?.dateOfBirth}
+                          inputProps={{ "data-test": "date-of-birth" }}
+                          {...register(`family.${ind}.dateOfBirth`)}
+                        />
+                        {!!errors.family?.[ind]?.dateOfBirth && (
+                          <FormLabel error data-test="date-of-birth-error">
+                            Date of Birth is required
+                          </FormLabel>
+                        )}
+                      </Grid>
+                      <Grid item md={6} xs={12}>
+                        <NationalityInputForm
+                          register={register}
+                          disabled={ViewMode}
+                          error={!!errors.family?.[ind]?.nationality}
+                          id={`family.${ind}.nationality`}
+                          defaultVal={family?.[ind]?.nationality ?? ""}
+                        />
+                      </Grid>
+                      <Grid item md={6} xs={12}>
+                        <SelectInputForm
+                          register={register}
+                          disabled={ViewMode}
+                          error={!!errors.family?.[ind]?.relationship}
+                          label="Relationship"
+                          id={`family.${ind}.relationship`}
+                          test="nationality"
+                          errMessage="Please select a relationship"
+                          defaultVal={family?.[ind]?.relationship ?? ""}
+                          items={relationships.map((item) => {
+                            return {
+                              ID: item,
+                              Title: item,
+                            };
+                          })}
+                        />
+                      </Grid>
+                      <Grid item xs={12} textAlign="end" hidden={ViewMode}>
+                        <Button
+                          color="error"
+                          variant="outlined"
+                          startIcon={<DeleteIcon />}
+                          onClick={(ev) => {
+                            ev.preventDefault();
+                            if (
+                              isNew ||
+                              window.confirm(
+                                "Confirm deleting the family member?"
+                              )
+                            ) {
+                              remove(ind);
+                              setExpanded(null);
+                            }
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Collapse>
+              </Card>
+            ))}
+            <Grid
+              sx={{
+                flex: 1,
+                mt: 2,
+              }}
+              hidden={ViewMode}
+            >
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<AddCircleOutlineIcon />}
+                onClick={(ev) => {
+                  ev.preventDefault();
+                  handleAddFamily();
+                }}
+              >
+                Add Family Member
+              </Button>
+            </Grid>
+          </Box>
+        </Grid>
+        <FormActions disabled={ViewMode} postStatus={postStatus} />
       </Grid>
     </Box>
   );

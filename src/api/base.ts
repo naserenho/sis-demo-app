@@ -135,7 +135,7 @@ export const createFamilyMember = async ({
   relationship,
 }: FamilyMemberBasic) => {
   try {
-    return await sisBackendAPI.post<FamilyMemberBasic>(
+    const result = await sisBackendAPI.post<FamilyMemberBasic>(
       `Students/${ID}/FamilyMembers`,
       {
         dateOfBirth,
@@ -144,6 +144,7 @@ export const createFamilyMember = async ({
         relationship,
       }
     );
+    return result.data;
   } catch (error) {
     if (error instanceof AxiosError) {
       return Promise.reject(error.response?.data);
@@ -276,17 +277,40 @@ export const postStudentDetails = async (student: FullStudentProfile) => {
       crntId.toString(),
       student.nationality?.ID.toString() ?? ""
     );
+
+    if (student.familyMembers.length > 0) {
+      student.familyMembers.forEach(async (member) => {
+        let crntMemberID: number | null = null;
+        if (member.ID) {
+          crntMemberID = member.ID;
+          // Update Family member details and nationality
+          const updatedFam = await updateFamilyMember({
+            ID: crntMemberID,
+            firstName: member.firstName,
+            lastName: member.lastName,
+            relationship: member.relationship,
+            dateOfBirth: member.dateOfBirth,
+          });
+        } else {
+          // Create new Family member
+          const createdFam = await createFamilyMember({
+            ID: crntId,
+            firstName: member.firstName,
+            lastName: member.lastName,
+            relationship: member.relationship,
+            dateOfBirth: member.dateOfBirth,
+          });
+          if (createdFam.ID) crntMemberID = createdFam.ID;
+        }
+        if (crntMemberID && member.nationality) {
+          const updateNtn = await updateFamilyMemberNationality(
+            crntMemberID.toString(),
+            member.nationality.ID.toString()
+          );
+        }
+      });
+    }
     return student;
-  } catch (error) {
-    return Promise.reject("Unknown Error");
-  }
-};
-
-export const createStudentDetails = async (student: Person) => {
-  try {
-    const newStudent = await createStudent(student);
-
-    return newStudent;
   } catch (error) {
     return Promise.reject("Unknown Error");
   }

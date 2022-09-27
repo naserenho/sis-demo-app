@@ -23,7 +23,7 @@ export default function ModalForm() {
       aria-describedby="modal-modal-description"
     >
       <Box className={classes.Modal}>
-        <Typography id="modal-modal-title" variant="h6" component="h2">
+        <Typography id="modal-modal-title" variant="h5" component="h2">
           {isNew
             ? "Add a new Student"
             : ViewMode

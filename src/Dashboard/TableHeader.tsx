@@ -25,13 +25,12 @@ export default function TableHeader() {
     <Box sx={{ flexGrow: 1 }}>
       <Grid container alignItems="flex-end" justifyContent="space-between">
         <h2>All Students</h2>
-        <p data-test="add-student">
+        <p data-test="add-student" hidden={role === "Registrar"}>
           <Button
             variant="contained"
             disableElevation
             startIcon={<AddIcon />}
             size="small"
-            hidden={role === "Registrar"}
             onClick={addNewPopup}
           >
             Add Student

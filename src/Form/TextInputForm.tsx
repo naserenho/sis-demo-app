@@ -11,7 +11,7 @@ interface ChildInputProps {
   errMessage: string;
 }
 
-export default function SingleInputForm({
+export default function TextInputForm({
   register,
   disabled,
   error,
@@ -28,7 +28,6 @@ export default function SingleInputForm({
         fullWidth
         id={id}
         label={label}
-        autoFocus
         disabled={disabled}
         error={error}
         inputProps={{ "data-test": test }}

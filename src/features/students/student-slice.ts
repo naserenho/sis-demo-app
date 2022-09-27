@@ -14,6 +14,7 @@ interface StudentState {
   viewedStudent: FullStudentProfile | null;
   students: StudentResponse[];
   nationalities: NationalityDetails[];
+  relationships: string[];
   refresh: boolean;
 }
 
@@ -24,6 +25,7 @@ const initialState: StudentState = {
   viewedStudent: null,
   students: [],
   nationalities: [],
+  relationships: ["Parent", "Sibling", "Spouse"],
   refresh: false,
 };
 
