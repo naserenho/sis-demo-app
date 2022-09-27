@@ -57,9 +57,11 @@ export const StudentColumns: GridColDef[] = [
   {
     field: "actions",
     headerName: "Action",
+    align: "center",
+    headerAlign: "center",
     renderCell: (params: GridRenderCellParams) => (
       <span>
-        <IconButton aria-label="delete" onClick={() => {}}>
+        <IconButton aria-label="open">
           <SettingsIcon />
         </IconButton>
       </span>

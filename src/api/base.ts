@@ -261,23 +261,40 @@ export const getStudentDetails = async (student: StudentResponse) => {
   }
 };
 
-export const postStudentDetails = async (student: FullStudentProfile) => {
+export const postStudentDetails = async ({
+  student,
+  existing,
+}: {
+  student: FullStudentProfile;
+  existing: FullStudentProfile | null;
+}) => {
   try {
     let crntId: number = 0;
     if (student.ID) {
       crntId = student.ID;
-      const updateBasicDetails = await updateStudent(student);
+      if (
+        existing?.firstName !== student.firstName ||
+        existing.lastName !== student.lastName ||
+        existing.dateOfBirth !== student.dateOfBirth
+      ) {
+        // Update only if any field is different
+        const updateBasicDetails = await updateStudent(student);
+      }
     } else {
       const newStudent = await createStudent({ ...student });
       if (newStudent.ID) {
         crntId = newStudent.ID;
       }
     }
-    const updateNationality = await updateStudentNationality(
-      crntId.toString(),
-      student.nationality?.ID.toString() ?? ""
-    );
+    if (!existing || existing.nationality?.ID !== student.nationality?.ID) {
+      // If student exists with same nationality, no need to update
+      const updateNationality = await updateStudentNationality(
+        crntId.toString(),
+        student.nationality?.ID.toString() ?? ""
+      );
+    }
 
+    // Handle Family Members
     if (student.familyMembers.length > 0) {
       student.familyMembers.forEach(async (member) => {
         let crntMemberID: number | null = null;
@@ -310,6 +327,21 @@ export const postStudentDetails = async (student: FullStudentProfile) => {
         }
       });
     }
+
+    // Handle deleting family members
+    if (existing && existing.familyMembers.length > 0) {
+      existing.familyMembers.forEach(async (member) => {
+        if (
+          member.ID &&
+          student.familyMembers.findIndex((value) => value.ID === member.ID) ===
+            -1
+        ) {
+          // Family member doesn't exist in the post payload, hence deleted
+          const removedMember = await deleteFamilyMember(member.ID.toString());
+        }
+      });
+    }
+
     return student;
   } catch (error) {
     return Promise.reject("Unknown Error");

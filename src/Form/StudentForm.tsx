@@ -128,23 +128,26 @@ export default function StudentForm() {
   }: StudentFormValue) => {
     if (ViewMode) return;
     postForm({
-      firstName,
-      lastName,
-      dateOfBirth,
-      ID: student?.ID,
-      nationality: {
-        ID: parseInt(nationality),
+      student: {
+        firstName,
+        lastName,
+        dateOfBirth,
+        ID: student?.ID,
+        nationality: {
+          ID: parseInt(nationality),
+        },
+        familyMembers: family
+          ? (family.map((item) => ({
+              ID: item.ID,
+              relationship: item.relationship,
+              firstName: item.firstName,
+              lastName: item.lastName,
+              dateOfBirth: item.dateOfBirth,
+              nationality: { ID: parseInt(item.nationality) },
+            })) as FamilyMembers[])
+          : [],
       },
-      familyMembers: family
-        ? (family.map((item) => ({
-            ID: item.ID,
-            relationship: item.relationship,
-            firstName: item.firstName,
-            lastName: item.lastName,
-            dateOfBirth: item.dateOfBirth,
-            nationality: { ID: parseInt(item.nationality) },
-          })) as FamilyMembers[])
-        : [],
+      existing: student,
     });
   };
   const handleExpandClick = (index: number) => {
@@ -255,7 +258,8 @@ export default function StudentForm() {
                     <Avatar sx={{ bgcolor: "lightgrey" }} aria-label="recipe">
                       {`${
                         item.firstName && item.lastName
-                          ? item.firstName[0] + item.lastName[0]
+                          ? item.firstName[0].toUpperCase() +
+                            item.lastName[0].toUpperCase()
                           : ind + 1
                       }`}
                     </Avatar>
