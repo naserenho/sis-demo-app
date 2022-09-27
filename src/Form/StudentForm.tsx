@@ -52,8 +52,11 @@ export default function StudentForm() {
   const [expanded, setExpanded] = useState<number | null>(null);
 
   const dispatch = useAppDispatch();
-  const { status: postStatus, execute: postForm } =
-    useAsync(postStudentDetails);
+  const {
+    status: postStatus,
+    execute: postForm,
+    value: postResult,
+  } = useAsync(postStudentDetails);
 
   const isNew = useAppSelector((state) => state.student.isNew);
   const selectedRole = useAppSelector((state) => state.student.selectedRole);
@@ -114,10 +117,11 @@ export default function StudentForm() {
 
   useEffect(() => {
     if (postStatus === "success") {
+      console.log(postResult);
       dispatch(refresh());
       dispatch(closeModal());
     }
-  }, [dispatch, postStatus]);
+  }, [dispatch, postResult, postStatus]);
 
   const submitChanges = ({
     firstName,

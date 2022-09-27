@@ -269,6 +269,7 @@ export const postStudentDetails = async ({
   existing: FullStudentProfile | null;
 }) => {
   try {
+    let message = "";
     let crntId: number = 0;
     if (student.ID) {
       crntId = student.ID;
@@ -279,9 +280,15 @@ export const postStudentDetails = async ({
       ) {
         // Update only if any field is different
         const updateBasicDetails = await updateStudent(student);
+        if (updateBasicDetails) {
+          message += "Updated Details for the student.\n";
+        }
       }
     } else {
       const newStudent = await createStudent({ ...student });
+      if (newStudent) {
+        message += "Created new student successfully.\n";
+      }
       if (newStudent.ID) {
         crntId = newStudent.ID;
       }
@@ -292,6 +299,9 @@ export const postStudentDetails = async ({
         crntId.toString(),
         student.nationality?.ID.toString() ?? ""
       );
+      if (updateNationality) {
+        message += "Updated student's nationality successfully.\n";
+      }
     }
 
     // Handle Family Members
@@ -308,6 +318,9 @@ export const postStudentDetails = async ({
             relationship: member.relationship,
             dateOfBirth: member.dateOfBirth,
           });
+          if (updatedFam) {
+            message += "Updated Family member.\n";
+          }
         } else {
           // Create new Family member
           const createdFam = await createFamilyMember({
@@ -317,6 +330,9 @@ export const postStudentDetails = async ({
             relationship: member.relationship,
             dateOfBirth: member.dateOfBirth,
           });
+          if (createdFam) {
+            message += "Created Family member.\n";
+          }
           if (createdFam.ID) crntMemberID = createdFam.ID;
         }
         if (crntMemberID && member.nationality) {
@@ -324,6 +340,9 @@ export const postStudentDetails = async ({
             crntMemberID.toString(),
             member.nationality.ID.toString()
           );
+          if (updateNtn) {
+            message += "Update nationality of a Family member.\n";
+          }
         }
       });
     }
@@ -338,11 +357,14 @@ export const postStudentDetails = async ({
         ) {
           // Family member doesn't exist in the post payload, hence deleted
           const removedMember = await deleteFamilyMember(member.ID.toString());
+          if (removedMember) {
+            message += "Deleted a Family member.\n";
+          }
         }
       });
     }
 
-    return student;
+    return message;
   } catch (error) {
     return Promise.reject("Unknown Error");
   }
