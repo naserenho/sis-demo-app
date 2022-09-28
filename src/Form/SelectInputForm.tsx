@@ -13,7 +13,6 @@ interface ChildInputProps {
   error: boolean;
   label: string;
   id: string;
-  test: string;
   errMessage: string;
   items: Array<{ ID: string; Title: string | undefined }>;
   defaultVal: string;
@@ -25,14 +24,13 @@ export default function SelectInputForm({
   error,
   label,
   id,
-  test,
   errMessage,
   items,
   defaultVal,
 }: ChildInputProps) {
   return (
     <>
-      <FormControl fullWidth disabled={disabled} error={error}>
+      <FormControl data-test={id} fullWidth disabled={disabled} error={error}>
         <InputLabel>{label}</InputLabel>
         <Select
           label={label}
@@ -40,15 +38,15 @@ export default function SelectInputForm({
           {...register(id)}
           defaultValue={defaultVal}
         >
-          {items.map((item) => (
-            <MenuItem key={item.ID} value={item.ID}>
+          {items.map((item, ind) => (
+            <MenuItem key={item.ID} value={item.ID} data-test={`${id}-${ind}`}>
               {item.Title}
             </MenuItem>
           ))}
         </Select>
       </FormControl>
       {error && (
-        <FormLabel error data-test={`${test}-error`}>
+        <FormLabel error data-test={`${id}-error`}>
           {errMessage}
         </FormLabel>
       )}

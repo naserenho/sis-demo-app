@@ -187,7 +187,6 @@ export default function StudentForm() {
             error={!!errors.firstName}
             label="First Name"
             id="firstName"
-            test="first-name"
             errMessage="First name is required"
           />
         </Grid>
@@ -198,7 +197,6 @@ export default function StudentForm() {
             error={!!errors.lastName}
             label="Last Name"
             id="lastName"
-            test="last-name"
             errMessage="Last name is required"
           />
         </Grid>
@@ -206,7 +204,7 @@ export default function StudentForm() {
           <TextField
             fullWidth
             required
-            id="date-of-birth"
+            id="dateOfBirth"
             label="Date of birth"
             type="datetime-local"
             disabled={ViewMode}
@@ -214,11 +212,11 @@ export default function StudentForm() {
               shrink: true,
             }}
             error={!!errors.dateOfBirth}
-            inputProps={{ "data-test": "date-of-birth" }}
+            inputProps={{ "data-test": "dateOfBirth" }}
             {...register("dateOfBirth")}
           />
           {!!errors.dateOfBirth && (
-            <FormLabel error data-test="date-of-birth-error">
+            <FormLabel error data-test="dateOfBirth-error">
               Date of Birth is required
             </FormLabel>
           )}
@@ -286,7 +284,6 @@ export default function StudentForm() {
                           error={!!errors.family?.[ind]?.firstName}
                           label="First Name"
                           id={`family.${ind}.firstName`}
-                          test="first-name"
                           errMessage="First name is required"
                         />
                       </Grid>
@@ -297,7 +294,6 @@ export default function StudentForm() {
                           error={!!errors.family?.[ind]?.lastName}
                           label="Last Name"
                           id={`family.${ind}.lastName`}
-                          test="last-name"
                           errMessage="Last name is required"
                         />
                       </Grid>
@@ -313,11 +309,16 @@ export default function StudentForm() {
                             shrink: true,
                           }}
                           error={!!errors.family?.[ind]?.dateOfBirth}
-                          inputProps={{ "data-test": "date-of-birth" }}
+                          inputProps={{
+                            "data-test": `family.${ind}.dateOfBirth`,
+                          }}
                           {...register(`family.${ind}.dateOfBirth`)}
                         />
                         {!!errors.family?.[ind]?.dateOfBirth && (
-                          <FormLabel error data-test="date-of-birth-error">
+                          <FormLabel
+                            error
+                            data-test={`family.${ind}.dateOfBirth-error`}
+                          >
                             Date of Birth is required
                           </FormLabel>
                         )}
@@ -338,7 +339,6 @@ export default function StudentForm() {
                           error={!!errors.family?.[ind]?.relationship}
                           label="Relationship"
                           id={`family.${ind}.relationship`}
-                          test="nationality"
                           errMessage="Please select a relationship"
                           defaultVal={family?.[ind]?.relationship ?? ""}
                           items={relationships.map((item) => {
@@ -351,6 +351,7 @@ export default function StudentForm() {
                       </Grid>
                       <Grid item xs={12} textAlign="end" hidden={ViewMode}>
                         <Button
+                          data-test={`family.${ind}.delete`}
                           color="error"
                           variant="outlined"
                           startIcon={<DeleteIcon />}
@@ -383,6 +384,7 @@ export default function StudentForm() {
               hidden={ViewMode}
             >
               <Button
+                data-test="add-family-member"
                 variant="contained"
                 color="success"
                 startIcon={<AddCircleOutlineIcon />}

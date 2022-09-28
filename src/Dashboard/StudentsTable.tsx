@@ -60,7 +60,7 @@ export const StudentColumns: GridColDef[] = [
     align: "center",
     headerAlign: "center",
     renderCell: (params: GridRenderCellParams) => (
-      <span>
+      <span data-test="student-action">
         <IconButton aria-label="open">
           <SettingsIcon />
         </IconButton>

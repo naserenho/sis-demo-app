@@ -21,6 +21,7 @@ export default function ModalForm() {
       onClose={handleClose}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description"
+      data-test="Open-Modal-Student"
     >
       <Box className={classes.Modal}>
         <Typography id="modal-modal-title" variant="h5" component="h2">

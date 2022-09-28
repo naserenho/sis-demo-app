@@ -34,7 +34,11 @@ const FormActions = ({
           <CircularProgress color="inherit" size={20} />
         </Backdrop>
       </Button>
-      <Button variant="outlined" onClick={handleClose}>
+      <Button
+        data-test="cancel-student-details"
+        variant="outlined"
+        onClick={handleClose}
+      >
         Cancel
       </Button>
     </Grid>

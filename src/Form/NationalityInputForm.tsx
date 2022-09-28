@@ -25,7 +25,6 @@ export default function NationalityInputForm({
       error={error}
       label="Nationality"
       id={id}
-      test="nationality"
       errMessage="Please select a nationality"
       defaultVal={defaultVal}
       items={nationalities.map((item) => {

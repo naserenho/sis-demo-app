@@ -7,7 +7,6 @@ interface ChildInputProps {
   error: boolean;
   label: string;
   id: string;
-  test: string;
   errMessage: string;
 }
 
@@ -17,24 +16,22 @@ export default function TextInputForm({
   error,
   label,
   id,
-  test,
   errMessage,
 }: ChildInputProps) {
   return (
     <>
       <TextField
-        autoComplete={test}
         required
         fullWidth
         id={id}
         label={label}
         disabled={disabled}
         error={error}
-        inputProps={{ "data-test": test }}
+        inputProps={{ "data-test": id }}
         {...register(id)}
       />
       {error && (
-        <FormLabel error data-test={`${test}-error`}>
+        <FormLabel error data-test={`${id}-error`}>
           {errMessage}
         </FormLabel>
       )}
